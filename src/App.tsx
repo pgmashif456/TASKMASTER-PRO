@@ -1,51 +1,118 @@
   
-import React from "react";
+  import React from "react";
 
 import {
   Routes,
   Route,
 } from "react-router-dom";
 
-import { LoginPage } from "./pages/LoginPage";
+import { LoginPage }
+from "./pages/LoginPage";
 
-import { RegisterPage } from "./pages/RegisterPage";
+import { RegisterPage }
+from "./pages/RegisterPage";
 
-import { PrivateRoute } from "./routes/PrivateRoute";
+import { ProjectsPage }
+from "./pages/ProjectsPage";
 
-import AdminPage from "./pages/AdminPage";
+import {
+  ProjectDetailPage
+} from "./pages/ProjectDetailPage";
+
+import {
+  PrivateRoute
+} from "./routes/PrivateRoute";
+
+import AdminPage
+from "./pages/AdminPage";
+
+import { NavBar }
+from "./components/NavBar";
 
 const DashboardPage = () => {
-  return <div>Dashboard - Welcome!</div>;
+  return (
+    <div>
+      Dashboard - Welcome!
+    </div>
+  );
 };
 
 function App() {
+
   return (
+
     <Routes>
 
+      {/* Login */}
       <Route
         path="/login"
         element={<LoginPage />}
       />
 
+      {/* Register */}
       <Route
         path="/register"
         element={<RegisterPage />}
       />
 
+      {/* Dashboard */}
       <Route
         path="/"
         element={
           <PrivateRoute>
-            <DashboardPage />
+
+            <>
+              <NavBar />
+              <DashboardPage />
+            </>
+
           </PrivateRoute>
         }
       />
 
+      {/* Admin */}
       <Route
         path="/admin"
         element={
-          <PrivateRoute allowedRoles={["admin"]}>
-            <AdminPage />
+          <PrivateRoute
+            allowedRoles={["admin"]}
+          >
+
+            <>
+              <NavBar />
+              <AdminPage />
+            </>
+
+          </PrivateRoute>
+        }
+      />
+
+      {/* Projects */}
+      <Route
+        path="/projects"
+        element={
+          <PrivateRoute>
+
+            <>
+              <NavBar />
+              <ProjectsPage />
+            </>
+
+          </PrivateRoute>
+        }
+      />
+
+      {/* Project Details */}
+      <Route
+        path="/projects/:projectId"
+        element={
+          <PrivateRoute>
+
+            <>
+              <NavBar />
+              <ProjectDetailPage />
+            </>
+
           </PrivateRoute>
         }
       />
