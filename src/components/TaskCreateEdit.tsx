@@ -14,47 +14,29 @@ import { db } from "../api/firebase";
 
 import { useAuth } from "../contexts/AuthContext";
 
+import { notifyUser } from "../utils/notifications";
+
 interface TaskForm {
   title: string;
-
   description?: string;
-
   assignedTo: string;
-
-  status:
-    | "pending"
-    | "in-progress"
-    | "completed";
-
-  priority:
-    | "low"
-    | "medium"
-    | "high";
-
+  status: "pending" | "in-progress" | "completed";
+  priority: "low" | "medium" | "high";
   dueDate: string;
 }
 
 interface Props {
   projectId: string;
-
   taskId?: string;
-
   existingData?: TaskForm;
-
   onComplete?: () => void;
 }
 
-export const TaskCreateEdit:
-React.FC<Props> = ({
-
+export const TaskCreateEdit: React.FC<Props> = ({
   projectId,
-
   taskId,
-
   existingData,
-
   onComplete,
-
 }) => {
 
   const { user } = useAuth();
@@ -64,20 +46,18 @@ React.FC<Props> = ({
     handleSubmit,
     reset,
     setValue,
+    formState: {
+      errors,
+      isSubmitting,
+    },
   } = useForm<TaskForm>({
     defaultValues:
       existingData || {
-
         title: "",
-
         description: "",
-
         assignedTo: "",
-
         status: "pending",
-
         priority: "medium",
-
         dueDate: "",
       },
   });
@@ -86,8 +66,7 @@ React.FC<Props> = ({
 
     if (existingData) {
 
-      for (const [key, value]
-      of Object.entries(existingData)) {
+      for (const [key, value] of Object.entries(existingData)) {
 
         setValue(
           key as keyof TaskForm,
@@ -98,7 +77,6 @@ React.FC<Props> = ({
 
   }, [existingData, setValue]);
 
-  // ✅ FIXED FUNCTION
   const onSubmit = async (
     data: TaskForm
   ) => {
@@ -109,35 +87,37 @@ React.FC<Props> = ({
 
       if (taskId) {
 
-        // Update Task
         const taskRef =
           doc(db, "tasks", taskId);
 
         await updateDoc(taskRef, {
-
           ...data,
-
           updatedAt:
             serverTimestamp(),
         });
 
+        await notifyUser(
+          data.assignedTo,
+          `Task updated: ${data.title}`
+        );
+
       } else {
 
-        // Create Task
         await addDoc(
           collection(db, "tasks"),
           {
-
             ...data,
-
             projectId,
-
             createdAt:
               serverTimestamp(),
-
             updatedAt:
               serverTimestamp(),
           }
+        );
+
+        await notifyUser(
+          data.assignedTo,
+          `New task assigned: ${data.title}`
         );
       }
 
@@ -167,87 +147,211 @@ React.FC<Props> = ({
   return (
 
     <form
-      onSubmit={
-        handleSubmit(onSubmit)
-      }
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-5"
     >
 
-      <input
-        {...register("title", {
-          required: true,
-        })}
-        placeholder="Title"
-      />
+      {/* Title */}
+      <div>
 
-      <br />
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Task Title
+        </label>
 
-      <textarea
-        {...register("description")}
-        placeholder="Description"
-      />
+        <input
+          {...register("title", {
+            required:
+              "Task title is required",
+          })}
+          placeholder="Enter task title"
+          className="
+            w-full
+            border
+            border-slate-300
+            rounded-lg
+            px-4
+            py-3
+            focus:outline-none
+            focus:ring-2
+            focus:ring-blue-500
+          "
+        />
 
-      <br />
+        {errors.title && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.title.message}
+          </p>
+        )}
 
-      <input
-        {...register("assignedTo", {
-          required: true,
-        })}
-        placeholder="Assign to (user ID)"
-      />
+      </div>
 
-      <br />
+      {/* Description */}
+      <div>
 
-      <select {...register("status")}>
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Description
+        </label>
 
-        <option value="pending">
-          Pending
-        </option>
+        <textarea
+          {...register("description")}
+          rows={4}
+          placeholder="Task description"
+          className="
+            w-full
+            border
+            border-slate-300
+            rounded-lg
+            px-4
+            py-3
+            resize-none
+            focus:outline-none
+            focus:ring-2
+            focus:ring-blue-500
+          "
+        />
 
-        <option value="in-progress">
-          In Progress
-        </option>
+      </div>
 
-        <option value="completed">
-          Completed
-        </option>
+      {/* Assigned User */}
+      <div>
 
-      </select>
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Assign To
+        </label>
 
-      <br />
+        <input
+          {...register("assignedTo", {
+            required:
+              "User ID is required",
+          })}
+          placeholder="Enter user ID"
+          className="
+            w-full
+            border
+            border-slate-300
+            rounded-lg
+            px-4
+            py-3
+            focus:outline-none
+            focus:ring-2
+            focus:ring-blue-500
+          "
+        />
 
-      <select
-        {...register("priority")}
+      </div>
+
+      {/* Status + Priority */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div>
+
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Status
+          </label>
+
+          <select
+            {...register("status")}
+            className="
+              w-full
+              border
+              border-slate-300
+              rounded-lg
+              px-4
+              py-3
+            "
+          >
+            <option value="pending">
+              Pending
+            </option>
+
+            <option value="in-progress">
+              In Progress
+            </option>
+
+            <option value="completed">
+              Completed
+            </option>
+          </select>
+
+        </div>
+
+        <div>
+
+          <label className="block text-sm font-medium text-slate-700 mb-2">
+            Priority
+          </label>
+
+          <select
+            {...register("priority")}
+            className="
+              w-full
+              border
+              border-slate-300
+              rounded-lg
+              px-4
+              py-3
+            "
+          >
+            <option value="low">
+              Low
+            </option>
+
+            <option value="medium">
+              Medium
+            </option>
+
+            <option value="high">
+              High
+            </option>
+          </select>
+
+        </div>
+
+      </div>
+
+      {/* Due Date */}
+      <div>
+
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Due Date
+        </label>
+
+        <input
+          type="date"
+          {...register("dueDate")}
+          className="
+            w-full
+            border
+            border-slate-300
+            rounded-lg
+            px-4
+            py-3
+          "
+        />
+
+      </div>
+
+      {/* Submit */}
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="
+          w-full
+          bg-blue-600
+          hover:bg-blue-700
+          text-white
+          py-3
+          rounded-lg
+          font-medium
+          transition
+          disabled:bg-slate-400
+        "
       >
-
-        <option value="low">
-          Low
-        </option>
-
-        <option value="medium">
-          Medium
-        </option>
-
-        <option value="high">
-          High
-        </option>
-
-      </select>
-
-      <br />
-
-      <input
-        type="date"
-        {...register("dueDate")}
-      />
-
-      <br />
-
-      <button type="submit">
-
-        {taskId
+        {isSubmitting
+          ? "Saving..."
+          : taskId
           ? "Update Task"
           : "Create Task"}
-
       </button>
 
     </form>

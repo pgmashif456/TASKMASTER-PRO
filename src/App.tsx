@@ -29,13 +29,9 @@ from "./pages/AdminPage";
 import { NavBar }
 from "./components/NavBar";
 
-const DashboardPage = () => {
-  return (
-    <div>
-      Dashboard - Welcome!
-    </div>
-  );
-};
+import {
+  DashboardPage
+} from "./pages/DashboardPage";
 
 function App() {
 
@@ -122,3 +118,5 @@ function App() {
 }
 
 export default App;
+
+ 

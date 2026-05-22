@@ -1,5 +1,6 @@
-import React from "react";
+  import React from "react";
 import { useForm } from "react-hook-form";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 interface LoginFormInputs {
@@ -9,31 +10,138 @@ interface LoginFormInputs {
 
 export const LoginForm: React.FC = () => {
   const { login } = useAuth();
-  const { register, handleSubmit, formState } = useForm<LoginFormInputs>();
+  const navigate = useNavigate();
 
-  const onSubmit = async (data: LoginFormInputs) => {
+  const {
+    register,
+    handleSubmit,
+    formState: {
+      errors,
+      isSubmitting,
+    },
+  } = useForm<LoginFormInputs>({
+    defaultValues: {
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (
+    data: LoginFormInputs
+  ) => {
     try {
-      await login(data.email, data.password);
-      alert("Logged in successfully");
+      await login(
+        data.email.trim(),
+        data.password
+      );
+
+      navigate("/");
+
     } catch (error) {
-      alert("Login failed: " + (error as Error).message);
+      alert(
+        "Login failed: " +
+        (error as Error).message
+      );
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <input
-        {...register("email", { required: "Email is required" })}
-        placeholder="Email"
-        type="email"
-      />
-      <input
-        {...register("password", { required: "Password is required" })}
-        placeholder="Password"
-        type="password"
-      />
-      <button type="submit" disabled={formState.isSubmitting}>
-        Login
+    <form
+      autoComplete="off"
+      onSubmit={handleSubmit(onSubmit)}
+      className="space-y-5"
+    >
+      {/* Email */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Email Address
+        </label>
+
+        <input
+          type="email"
+          autoComplete="off"
+          defaultValue=""
+          placeholder="Enter your email"
+          {...register("email", {
+            required: "Email is required",
+          })}
+          className="
+            w-full
+            border
+            border-slate-300
+            rounded-lg
+            px-4
+            py-3
+            focus:outline-none
+            focus:ring-2
+            focus:ring-blue-500
+            focus:border-blue-500
+          "
+        />
+
+        {errors.email && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.email.message}
+          </p>
+        )}
+      </div>
+
+      {/* Password */}
+      <div>
+        <label className="block text-sm font-medium text-slate-700 mb-2">
+          Password
+        </label>
+
+        <input
+          type="password"
+          autoComplete="new-password"
+          defaultValue=""
+          placeholder="Enter your password"
+          {...register("password", {
+            required: "Password is required",
+          })}
+          className="
+            w-full
+            border
+            border-slate-300
+            rounded-lg
+            px-4
+            py-3
+            focus:outline-none
+            focus:ring-2
+            focus:ring-blue-500
+            focus:border-blue-500
+          "
+        />
+
+        {errors.password && (
+          <p className="text-red-500 text-sm mt-1">
+            {errors.password.message}
+          </p>
+        )}
+      </div>
+
+      {/* Submit Button */}
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="
+          w-full
+          bg-blue-600
+          hover:bg-blue-700
+          text-white
+          font-medium
+          py-3
+          rounded-lg
+          transition
+          duration-200
+          disabled:bg-slate-400
+          disabled:cursor-not-allowed
+        "
+      >
+        {isSubmitting
+          ? "Signing In..."
+          : "Login"}
       </button>
     </form>
   );

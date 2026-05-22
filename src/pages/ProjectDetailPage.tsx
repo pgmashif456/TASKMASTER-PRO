@@ -1,86 +1,117 @@
-  import React from "react";
+ 
+ import React, { useState } from "react";
 
 import { useParams } from "react-router-dom";
 
-import { TaskCreateEdit }
-from "../components/TaskCreateEdit";
+import { SearchBar } from "../components/SearchBar";
 
-import { TaskList }
-from "../components/TaskList";
+import { FilterPanel } from "../components/FilterPanel";
 
-import { CommentList }
-from "../components/CommentList";
+import { TaskList } from "../components/TaskList";
 
-import { CommentForm }
-from "../components/CommentForm";
+export const ProjectDetailPage: React.FC = () => {
 
-import { FileUploader }
-from "../components/FileUploader";
+  const { projectId } = useParams<{
+    projectId: string;
+  }>();
 
-export const ProjectDetailPage:
-React.FC = () => {
+  const [searchTerm, setSearchTerm] =
+    useState("");
 
-  // URL se projectId fetch
-  const { projectId } = useParams();
+  const [statusFilter, setStatusFilter] =
+    useState("");
 
-  // TEMP taskId
-  // Later selected task dynamic hoga
-  const taskId = "sample-task-id";
+  const [priorityFilter, setPriorityFilter] =
+    useState("");
 
   if (!projectId) {
 
     return (
-      <div>
-        Project not found
+
+      <div className="min-h-screen flex items-center justify-center bg-slate-100">
+
+        <div className="bg-white p-8 rounded-xl shadow-md">
+
+          <h2 className="text-2xl font-bold text-red-500">
+            Project not found
+          </h2>
+
+        </div>
+
       </div>
     );
   }
 
   return (
 
-    <div>
+    <div className="min-h-screen bg-slate-100 p-6">
 
-      <h1>
-        Project Details
-      </h1>
+      <div className="max-w-7xl mx-auto">
 
-      {/* Create/Edit Task */}
-      <TaskCreateEdit
-        projectId={projectId}
-      />
+        {/* Header */}
+        <div className="mb-8">
 
-      <hr />
+          <h1 className="text-4xl font-bold text-slate-800">
+            Project Details
+          </h1>
 
-      {/* Task List */}
-      <TaskList
-        projectId={projectId}
-      />
+          <p className="text-slate-500 mt-2">
+            Manage tasks, search work items and track progress.
+          </p>
 
-      <hr />
+        </div>
 
-      {/* Comments Section */}
-      <h2>
-        Task Comments
-      </h2>
+        {/* Search & Filters */}
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
 
-      <CommentList
-        taskId={taskId}
-      />
+          <h2 className="text-xl font-semibold text-slate-700 mb-4">
+            Search & Filters
+          </h2>
 
-      <CommentForm
-        taskId={taskId}
-      />
+          <div className="space-y-4">
 
-      <hr />
+            <SearchBar
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search tasks..."
+            />
 
-      {/* Attachments */}
-      <h2>
-        Attachments
-      </h2>
+            <FilterPanel
+              status={statusFilter}
+              setStatus={setStatusFilter}
+              priority={priorityFilter}
+              setPriority={setPriorityFilter}
+            />
 
-      <FileUploader
-        taskId={taskId}
-      />
+          </div>
+
+        </div>
+
+        {/* Tasks Section */}
+        <div className="bg-white rounded-2xl shadow-md p-6">
+
+          <div className="flex items-center justify-between mb-4">
+
+            <h2 className="text-2xl font-semibold text-slate-800">
+              Project Tasks
+            </h2>
+
+            <span className="text-sm text-slate-500">
+              Filtered Results
+            </span>
+
+          </div>
+
+          <TaskList
+            projectId={projectId}
+            searchTerm={searchTerm}
+            statusFilter={statusFilter}
+            priorityFilter={priorityFilter}
+          />
+
+        </div>
+
+      </div>
 
     </div>
   );
