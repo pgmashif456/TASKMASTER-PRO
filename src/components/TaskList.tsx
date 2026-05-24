@@ -206,6 +206,10 @@ export const TaskList: React.FC<Props> = ({
     }
   };
 
+   console.log("Search Term:", searchTerm);
+console.log("Status Filter:", statusFilter);
+console.log("Priority Filter:", priorityFilter);
+console.log("Tasks:", tasks);
   return (
 
     <div>
