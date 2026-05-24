@@ -127,13 +127,11 @@ export const TaskCreateEdit: React.FC<Props> = ({
         onComplete();
       }
 
-      alert(
-        `Task ${
-          taskId
-            ? "updated"
-            : "created"
-        } successfully`
-      );
+       alert(
+  taskId
+    ? "Task updated successfully"
+    : "Task created successfully"
+);
 
     } catch (error) {
 

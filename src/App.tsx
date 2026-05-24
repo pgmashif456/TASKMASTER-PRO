@@ -1,10 +1,12 @@
   
-  import React from "react";
+   import React from "react";
 
 import {
   Routes,
   Route,
 } from "react-router-dom";
+
+import HomePage from "./pages/HomePage";
 
 import { LoginPage }
 from "./pages/LoginPage";
@@ -12,26 +14,32 @@ from "./pages/LoginPage";
 import { RegisterPage }
 from "./pages/RegisterPage";
 
+import { DashboardPage }
+from "./pages/DashboardPage";
+
 import { ProjectsPage }
 from "./pages/ProjectsPage";
 
 import {
-  ProjectDetailPage
+  ProjectDetailPage,
 } from "./pages/ProjectDetailPage";
-
-import {
-  PrivateRoute
-} from "./routes/PrivateRoute";
 
 import AdminPage
 from "./pages/AdminPage";
 
-import { NavBar }
-from "./components/NavBar";
+import ReportsPage
+from "./pages/ReportsPage";
+
+import NotificationsPage
+from "./pages/NotificationsPage";
 
 import {
-  DashboardPage
-} from "./pages/DashboardPage";
+  PrivateRoute,
+} from "./routes/PrivateRoute";
+
+import {
+  NavBar,
+} from "./components/NavBar";
 
 function App() {
 
@@ -39,29 +47,90 @@ function App() {
 
     <Routes>
 
-      {/* Login */}
+      {/* ========================= */}
+      {/* Public Routes */}
+      {/* ========================= */}
+
+      <Route
+        path="/"
+        element={<HomePage />}
+      />
+
       <Route
         path="/login"
         element={<LoginPage />}
       />
 
-      {/* Register */}
       <Route
         path="/register"
         element={<RegisterPage />}
       />
 
+      {/* ========================= */}
+      {/* Protected Routes */}
+      {/* ========================= */}
+
       {/* Dashboard */}
       <Route
-        path="/"
+        path="/dashboard"
         element={
           <PrivateRoute>
-
             <>
               <NavBar />
               <DashboardPage />
             </>
+          </PrivateRoute>
+        }
+      />
 
+      {/* Projects */}
+      <Route
+        path="/projects"
+        element={
+          <PrivateRoute>
+            <>
+              <NavBar />
+              <ProjectsPage />
+            </>
+          </PrivateRoute>
+        }
+      />
+
+      {/* Project Detail */}
+      <Route
+        path="/projects/:projectId"
+        element={
+          <PrivateRoute>
+            <>
+              <NavBar />
+              <ProjectDetailPage />
+            </>
+          </PrivateRoute>
+        }
+      />
+
+      {/* Notifications Page */}
+      <Route
+        path="/notifications"
+        element={
+          <PrivateRoute>
+            <>
+              <NavBar />
+              <NotificationsPage />
+            </>
+          </PrivateRoute>
+        }
+      />
+
+      {/* Reports Page */}
+      <Route
+        path="/reports"
+        element={
+          <PrivateRoute>
+            <>
+              <NavBar />
+              <ReportsPage />
+            </>
           </PrivateRoute>
         }
       />
@@ -73,42 +142,10 @@ function App() {
           <PrivateRoute
             allowedRoles={["admin"]}
           >
-
             <>
               <NavBar />
               <AdminPage />
             </>
-
-          </PrivateRoute>
-        }
-      />
-
-      {/* Projects */}
-      <Route
-        path="/projects"
-        element={
-          <PrivateRoute>
-
-            <>
-              <NavBar />
-              <ProjectsPage />
-            </>
-
-          </PrivateRoute>
-        }
-      />
-
-      {/* Project Details */}
-      <Route
-        path="/projects/:projectId"
-        element={
-          <PrivateRoute>
-
-            <>
-              <NavBar />
-              <ProjectDetailPage />
-            </>
-
           </PrivateRoute>
         }
       />
@@ -118,5 +155,3 @@ function App() {
 }
 
 export default App;
-
- 

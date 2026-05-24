@@ -1,4 +1,7 @@
- import React, { useEffect, useState } from "react";
+  import React, {
+  useEffect,
+  useState,
+} from "react";
 
 import {
   collection,
@@ -6,10 +9,20 @@ import {
   where,
   onSnapshot,
   orderBy,
+  doc,
+  deleteDoc,
+  updateDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 
+import {
+  useNavigate,
+} from "react-router-dom";
+
 import { db } from "../api/firebase";
-import { useAuth } from "../contexts/AuthContext";
+
+import { useAuth }
+from "../contexts/AuthContext";
 
 interface Project {
   id: string;
@@ -18,176 +31,435 @@ interface Project {
   ownerId?: string;
 }
 
-export const ProjectList: React.FC = () => {
+export const ProjectList:
+React.FC = () => {
+
   const { user } = useAuth();
 
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
+  const navigate =
+    useNavigate();
+
+  const [projects,
+    setProjects] = useState<
+      Project[]
+    >([]);
+
+  const [loading,
+    setLoading] =
+      useState(true);
+
+  const [
+    showEditModal,
+    setShowEditModal,
+  ] = useState(false);
+
+  const [
+    editingProject,
+    setEditingProject,
+  ] = useState<Project | null>(
+    null
+  );
+
+  const [
+    editName,
+    setEditName,
+  ] = useState("");
+
+  const [
+    editDescription,
+    setEditDescription,
+  ] = useState("");
 
   useEffect(() => {
+
     if (!user) {
-      console.log("❌ User not found");
+      setLoading(false);
       return;
     }
 
-    console.log("✅ Current User UID:", user.uid);
-
     const q = query(
-      collection(db, "projects"),
-      where("ownerId", "==", user.uid),
-      orderBy("createdAt", "desc")
+      collection(
+        db,
+        "projects"
+      ),
+
+      where(
+        "ownerId",
+        "==",
+        user.uid
+      ),
+
+      orderBy(
+        "createdAt",
+        "desc"
+      )
     );
 
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        console.log(
-          "📁 Projects Found:",
-          snapshot.size
-        );
+    const unsubscribe =
+      onSnapshot(
+        q,
+        (snapshot) => {
 
-        const projectData = snapshot.docs.map(
-          (doc) => {
-            console.log(
-              "Project:",
-              doc.id,
-              doc.data()
+          const data =
+            snapshot.docs.map(
+              (doc) => ({
+                id: doc.id,
+
+                ...(doc.data() as Omit<
+                  Project,
+                  "id"
+                >),
+              })
             );
 
-            return {
-              id: doc.id,
-              ...(doc.data() as Omit<
-                Project,
-                "id"
-              >),
-            };
+          setProjects(data);
+          setLoading(false);
+        }
+      );
+
+    return () =>
+      unsubscribe();
+
+  }, [user]);
+
+  const handleDelete =
+    async (
+      projectId: string
+    ) => {
+
+      const confirmDelete =
+        window.confirm(
+          "Delete this project?"
+        );
+
+      if (!confirmDelete)
+        return;
+
+      try {
+
+        await deleteDoc(
+          doc(
+            db,
+            "projects",
+            projectId
+          )
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "Failed to delete project"
+        );
+      }
+    };
+
+  const handleUpdateProject =
+    async () => {
+
+      if (
+        !editingProject
+      )
+        return;
+
+      if (
+        !editName.trim()
+      ) {
+
+        alert(
+          "Project name is required"
+        );
+
+        return;
+      }
+
+      try {
+
+        await updateDoc(
+          doc(
+            db,
+            "projects",
+            editingProject.id
+          ),
+          {
+            name:
+              editName.trim(),
+
+            description:
+              editDescription.trim(),
+
+            updatedAt:
+              serverTimestamp(),
           }
         );
 
-        setProjects(projectData);
-        setLoading(false);
-      },
-      (error) => {
-        console.error(
-          "Firestore Error:",
-          error
+        setShowEditModal(
+          false
         );
-        setLoading(false);
+
+        setEditingProject(
+          null
+        );
+
+        alert(
+          "Project updated successfully"
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "Failed to update project"
+        );
       }
-    );
-
-    return () => unsubscribe();
-  }, [user]);
-
-  if (!user) {
-    return (
-      <div className="text-center py-10">
-        User not logged in
-      </div>
-    );
-  }
+    };
 
   if (loading) {
     return (
       <div className="text-center py-10">
-        Loading projects...
+        Loading...
       </div>
     );
   }
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-2xl font-semibold text-slate-800">
-          Your Projects
-        </h2>
+    <>
+      <div
+        className="
+          grid
+          grid-cols-1
+          md:grid-cols-2
+          lg:grid-cols-3
+          gap-6
+        "
+      >
+        {projects.map(
+          (project) => (
 
-        <span
-          className="
-            bg-blue-100
-            text-blue-700
-            px-3
-            py-1
-            rounded-full
-            text-sm
-            font-medium
-          "
-        >
-          {projects.length} Project
-          {projects.length !== 1 && "s"}
-        </span>
-      </div>
-
-      {/* Empty State */}
-      {projects.length === 0 ? (
-        <div
-          className="
-            bg-slate-50
-            border
-            border-dashed
-            border-slate-300
-            rounded-xl
-            p-10
-            text-center
-          "
-        >
-          <h3 className="text-lg font-medium text-slate-700">
-            No Projects Yet
-          </h3>
-
-          <p className="text-slate-500 mt-2">
-            Create your first project
-            to get started.
-          </p>
-        </div>
-      ) : (
-        <div
-          className="
-            grid
-            grid-cols-1
-            md:grid-cols-2
-            lg:grid-cols-3
-            gap-5
-          "
-        >
-          {projects.map((project) => (
             <div
               key={project.id}
               className="
                 bg-white
                 border
-                border-slate-200
                 rounded-xl
                 p-5
                 shadow-sm
                 hover:shadow-lg
                 transition
+                min-h-[260px]
+                flex
+                flex-col
+                justify-between
               "
             >
-              <h3
-                className="
-                  text-xl
-                  font-semibold
-                  text-slate-800
-                  mb-2
-                "
-              >
-                {project.name}
-              </h3>
+              <div>
 
-              <p
+                <h3
+                  className="
+                    text-2xl
+                    font-bold
+                    mb-3
+                    break-words
+                  "
+                >
+                  {project.name}
+                </h3>
+
+                <p
+                  className="
+                    text-slate-600
+                    break-words
+                    whitespace-pre-wrap
+                    line-clamp-4
+                  "
+                >
+                  {project.description ||
+                    "No description"}
+                </p>
+
+              </div>
+
+              <div className="flex gap-2 mt-6">
+
+                <button
+                  onClick={() =>
+                    navigate(
+                      `/projects/${project.id}`
+                    )
+                  }
+                  className="
+                    bg-blue-600
+                    hover:bg-blue-700
+                    text-white
+                    px-4
+                    py-2
+                    rounded-lg
+                  "
+                >
+                  View
+                </button>
+
+                <button
+                  onClick={() => {
+
+                    setEditingProject(
+                      project
+                    );
+
+                    setEditName(
+                      project.name
+                    );
+
+                    setEditDescription(
+                      project.description ||
+                        ""
+                    );
+
+                    setShowEditModal(
+                      true
+                    );
+                  }}
+                  className="
+                    bg-amber-500
+                    hover:bg-amber-600
+                    text-white
+                    px-4
+                    py-2
+                    rounded-lg
+                  "
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() =>
+                    handleDelete(
+                      project.id
+                    )
+                  }
+                  className="
+                    bg-red-500
+                    hover:bg-red-600
+                    text-white
+                    px-4
+                    py-2
+                    rounded-lg
+                  "
+                >
+                  Delete
+                </button>
+
+              </div>
+            </div>
+          )
+        )}
+      </div>
+
+      {/* EDIT MODAL */}
+
+      {showEditModal && (
+
+        <div
+          className="
+            fixed
+            inset-0
+            bg-black/50
+            flex
+            items-center
+            justify-center
+            z-50
+            p-4
+          "
+        >
+          <div
+            className="
+              bg-white
+              rounded-2xl
+              shadow-xl
+              p-6
+              w-full
+              max-w-lg
+            "
+          >
+            <h2
+              className="
+                text-2xl
+                font-bold
+                mb-5
+              "
+            >
+              Edit Project
+            </h2>
+
+            <input
+              value={editName}
+              onChange={(e) =>
+                setEditName(
+                  e.target.value
+                )
+              }
+              placeholder="Project Name"
+              className="
+                w-full
+                border
+                rounded-lg
+                px-4
+                py-3
+                mb-4
+              "
+            />
+
+            <textarea
+              rows={5}
+              value={
+                editDescription
+              }
+              onChange={(e) =>
+                setEditDescription(
+                  e.target.value
+                )
+              }
+              placeholder="Project Description"
+              className="
+                w-full
+                border
+                rounded-lg
+                px-4
+                py-3
+                resize-none
+              "
+            />
+
+            <div
+              className="
+                flex
+                justify-end
+                gap-3
+                mt-5
+              "
+            >
+              <button
+                onClick={() =>
+                  setShowEditModal(
+                    false
+                  )
+                }
                 className="
-                  text-slate-600
-                  text-sm
-                  mb-4
+                  border
+                  px-4
+                  py-2
+                  rounded-lg
                 "
               >
-                {project.description ||
-                  "No description provided"}
-              </p>
+                Cancel
+              </button>
 
               <button
+                onClick={
+                  handleUpdateProject
+                }
                 className="
                   bg-blue-600
                   hover:bg-blue-700
@@ -195,16 +467,15 @@ export const ProjectList: React.FC = () => {
                   px-4
                   py-2
                   rounded-lg
-                  text-sm
-                  transition
                 "
               >
-                View Project
+                Save Changes
               </button>
+
             </div>
-          ))}
+          </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

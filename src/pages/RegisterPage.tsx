@@ -1,4 +1,5 @@
-  import React from "react";
+ import React from "react";
+import { Link } from "react-router-dom";
 
 import { RegisterForm }
 from "../components/RegisterForm";
@@ -26,6 +27,29 @@ export const RegisterPage: React.FC = () => {
 
         {/* Register Form */}
         <RegisterForm />
+
+        {/* Login Link */}
+        <div className="mt-6 text-center">
+
+          <p className="text-slate-600">
+            Already have an account?{" "}
+
+            <Link
+              to="/login"
+              className="
+                text-blue-600
+                font-semibold
+                hover:text-blue-700
+                hover:underline
+                transition
+              "
+            >
+              Login
+            </Link>
+
+          </p>
+
+        </div>
 
         {/* Footer */}
         <div className="mt-6 text-center">

@@ -8,9 +8,15 @@ import {
   onSnapshot,
   query,
   where,
+  deleteDoc,
+  doc,
 } from "firebase/firestore";
 
 import { db } from "../api/firebase";
+
+import { TaskCreateEdit } from "./TaskCreateEdit";
+import { CommentForm } from "./CommentForm";
+import { CommentList } from "./CommentList";
 
 interface Task {
   id: string;
@@ -18,6 +24,8 @@ interface Task {
   description?: string;
   status: string;
   priority: string;
+  assignedTo?: string;
+  dueDate?: string;
 }
 
 interface Props {
@@ -36,6 +44,34 @@ export const TaskList: React.FC<Props> = ({
 
   const [tasks, setTasks] =
     useState<Task[]>([]);
+
+  const [editingTask, setEditingTask] =
+    useState<Task | null>(null);
+
+  const [showCommentsFor, setShowCommentsFor] =
+    useState<string | null>(null);
+
+  // Lock background scroll when modal open
+  useEffect(() => {
+
+    if (editingTask) {
+
+      document.body.style.overflow =
+        "hidden";
+
+    } else {
+
+      document.body.style.overflow =
+        "auto";
+    }
+
+    return () => {
+
+      document.body.style.overflow =
+        "auto";
+    };
+
+  }, [editingTask]);
 
   useEffect(() => {
 
@@ -64,42 +100,34 @@ export const TaskList: React.FC<Props> = ({
 
             .filter((task) => {
 
-              const matchesSearch =
+  const search =
+    searchTerm.trim().toLowerCase();
 
-                !searchTerm ||
+  const title =
+    task.title?.toLowerCase() || "";
 
-                task.title
-                  .toLowerCase()
-                  .includes(
-                    searchTerm.toLowerCase()
-                  ) ||
+  const description =
+    task.description?.toLowerCase() || "";
 
-                task.description
-                  ?.toLowerCase()
-                  .includes(
-                    searchTerm.toLowerCase()
-                  );
+  const matchesSearch =
+    search === "" ||
+    title.includes(search) ||
+    description.includes(search);
 
-              const matchesStatus =
+  const matchesStatus =
+    statusFilter === "" ||
+    task.status === statusFilter;
 
-                !statusFilter ||
+  const matchesPriority =
+    priorityFilter === "" ||
+    task.priority === priorityFilter;
 
-                task.status ===
-                  statusFilter;
-
-              const matchesPriority =
-
-                !priorityFilter ||
-
-                task.priority ===
-                  priorityFilter;
-
-              return (
-                matchesSearch &&
-                matchesStatus &&
-                matchesPriority
-              );
-            });
+  return (
+    matchesSearch &&
+    matchesStatus &&
+    matchesPriority
+  );
+})
 
         setTasks(filteredTasks);
       });
@@ -113,6 +141,36 @@ export const TaskList: React.FC<Props> = ({
     statusFilter,
     priorityFilter,
   ]);
+
+  const handleDeleteTask =
+    async (taskId: string) => {
+
+      const confirmDelete =
+        window.confirm(
+          "Delete this task?"
+        );
+
+      if (!confirmDelete) return;
+
+      try {
+
+        await deleteDoc(
+          doc(db, "tasks", taskId)
+        );
+
+        alert(
+          "Task deleted successfully"
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        alert(
+          "Failed to delete task"
+        );
+      }
+    };
 
   const getStatusStyle = (
     status: string
@@ -152,6 +210,8 @@ export const TaskList: React.FC<Props> = ({
 
     <div>
 
+      {/* Header */}
+
       <div className="flex items-center justify-between mb-6">
 
         <h2 className="text-2xl font-semibold text-slate-800">
@@ -175,6 +235,8 @@ export const TaskList: React.FC<Props> = ({
 
       </div>
 
+      {/* Empty State */}
+
       {tasks.length === 0 ? (
 
         <div
@@ -194,8 +256,7 @@ export const TaskList: React.FC<Props> = ({
           </h3>
 
           <p className="text-slate-500 mt-2">
-            Create a task or adjust
-            your filters.
+            Create a task or adjust your filters.
           </p>
 
         </div>
@@ -227,32 +288,30 @@ export const TaskList: React.FC<Props> = ({
               "
             >
 
-              <div className="flex items-start justify-between mb-3">
-
-                <h3
-                  className="
-                    text-lg
-                    font-semibold
-                    text-slate-800
-                  "
-                >
-                  {task.title}
-                </h3>
-
-              </div>
+              <h3
+                className="
+                  text-lg
+                  font-semibold
+                  text-slate-800
+                  mb-3
+                "
+              >
+                {task.title}
+              </h3>
 
               <p
                 className="
                   text-slate-600
                   text-sm
                   mb-4
+                  break-words
                 "
               >
                 {task.description ||
-                  "No description provided."}
+                  "No description provided"}
               </p>
 
-              <div className="flex gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap mb-5">
 
                 <span
                   className={`
@@ -286,6 +345,89 @@ export const TaskList: React.FC<Props> = ({
 
               </div>
 
+              {/* Buttons */}
+
+              <div className="flex flex-wrap gap-3">
+
+                <button
+                  onClick={() =>
+                    setEditingTask(task)
+                  }
+                  className="
+                    bg-orange-500
+                    hover:bg-orange-600
+                    text-white
+                    px-4
+                    py-2
+                    rounded-lg
+                    transition
+                  "
+                >
+                  Edit
+                </button>
+
+                <button
+                  onClick={() =>
+                    handleDeleteTask(
+                      task.id
+                    )
+                  }
+                  className="
+                    bg-red-500
+                    hover:bg-red-600
+                    text-white
+                    px-4
+                    py-2
+                    rounded-lg
+                    transition
+                  "
+                >
+                  Delete
+                </button>
+
+                <button
+                  onClick={() =>
+                    setShowCommentsFor(
+                      showCommentsFor === task.id
+                        ? null
+                        : task.id
+                    )
+                  }
+                  className="
+                    bg-blue-600
+                    hover:bg-blue-700
+                    text-white
+                    px-4
+                    py-2
+                    rounded-lg
+                    transition
+                  "
+                >
+                  {showCommentsFor === task.id
+                    ? "Hide Comments"
+                    : "Comments"}
+                </button>
+
+              </div>
+
+              {/* Comments */}
+
+              {showCommentsFor === task.id && (
+
+                <div className="mt-6 space-y-4">
+
+                  <CommentForm
+                    taskId={task.id}
+                  />
+
+                  <CommentList
+                    taskId={task.id}
+                  />
+
+                </div>
+
+              )}
+
             </div>
 
           ))}
@@ -294,6 +436,95 @@ export const TaskList: React.FC<Props> = ({
 
       )}
 
+      {/* Edit Modal */}
+
+       {editingTask && (
+
+  <div
+    className="
+      fixed
+      inset-0
+      z-50
+      bg-black/50
+      overflow-y-auto
+    "
+  >
+
+    <div
+      className="
+        min-h-screen
+        flex
+        items-start
+        justify-center
+        py-10
+        px-4
+      "
+    >
+
+      <div
+        className="
+          bg-white
+          rounded-2xl
+          shadow-xl
+          w-full
+          max-w-3xl
+          p-6
+        "
+      >
+
+            <div className="flex items-center justify-between mb-5">
+
+              <h2 className="text-2xl font-bold text-slate-800">
+                Edit Task
+              </h2>
+
+              <button
+                onClick={() =>
+                  setEditingTask(null)
+                }
+                className="
+                  text-slate-500
+                  hover:text-red-500
+                  text-2xl
+                "
+              >
+                ✕
+              </button>
+
+            </div>
+
+            <TaskCreateEdit
+              projectId={projectId}
+              taskId={editingTask.id}
+              existingData={{
+                title:
+                  editingTask.title,
+
+                description:
+                  editingTask.description,
+
+                assignedTo:
+                  editingTask.assignedTo || "",
+
+                status:
+                  editingTask.status as any,
+
+                priority:
+                  editingTask.priority as any,
+
+                dueDate:
+                  editingTask.dueDate || "",
+              }}
+              onComplete={() =>
+                setEditingTask(null)
+              }
+            />
+
+                 </div>
+    </div>
+  </div>
+
+)}
     </div>
   );
 };

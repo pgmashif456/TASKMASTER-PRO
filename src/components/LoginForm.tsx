@@ -35,7 +35,10 @@ export const LoginForm: React.FC = () => {
         data.password
       );
 
-      navigate("/");
+      // Login Success
+      navigate("/dashboard", {
+        replace: true,
+      });
 
     } catch (error) {
       alert(
@@ -47,7 +50,6 @@ export const LoginForm: React.FC = () => {
 
   return (
     <form
-      autoComplete="off"
       onSubmit={handleSubmit(onSubmit)}
       className="space-y-5"
     >
@@ -59,8 +61,7 @@ export const LoginForm: React.FC = () => {
 
         <input
           type="email"
-          autoComplete="off"
-          defaultValue=""
+          autoComplete="email"
           placeholder="Enter your email"
           {...register("email", {
             required: "Email is required",
@@ -94,8 +95,7 @@ export const LoginForm: React.FC = () => {
 
         <input
           type="password"
-          autoComplete="new-password"
-          defaultValue=""
+          autoComplete="current-password"
           placeholder="Enter your password"
           {...register("password", {
             required: "Password is required",
@@ -121,7 +121,7 @@ export const LoginForm: React.FC = () => {
         )}
       </div>
 
-      {/* Submit Button */}
+      {/* Login Button */}
       <button
         type="submit"
         disabled={isSubmitting}

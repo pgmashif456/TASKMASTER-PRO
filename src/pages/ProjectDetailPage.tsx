@@ -1,13 +1,12 @@
  
- import React, { useState } from "react";
+  import React, { useState } from "react";
 
 import { useParams } from "react-router-dom";
 
 import { SearchBar } from "../components/SearchBar";
-
 import { FilterPanel } from "../components/FilterPanel";
-
 import { TaskList } from "../components/TaskList";
+import { TaskCreateEdit } from "../components/TaskCreateEdit";
 
 export const ProjectDetailPage: React.FC = () => {
 
@@ -23,6 +22,9 @@ export const ProjectDetailPage: React.FC = () => {
 
   const [priorityFilter, setPriorityFilter] =
     useState("");
+
+  const [showTaskForm, setShowTaskForm] =
+    useState(false);
 
   if (!projectId) {
 
@@ -84,6 +86,55 @@ export const ProjectDetailPage: React.FC = () => {
             />
 
           </div>
+
+        </div>
+
+        {/* Create Task */}
+        <div className="bg-white rounded-2xl shadow-md p-6 mb-6">
+
+          <div className="flex items-center justify-between">
+
+            <h2 className="text-2xl font-semibold text-slate-800">
+              Task Management
+            </h2>
+
+            <button
+              onClick={() =>
+                setShowTaskForm(
+                  !showTaskForm
+                )
+              }
+              className="
+                bg-green-600
+                hover:bg-green-700
+                text-white
+                px-5
+                py-2
+                rounded-lg
+                transition
+              "
+            >
+              {showTaskForm
+                ? "Close Form"
+                : "Create Task"}
+            </button>
+
+          </div>
+
+          {showTaskForm && (
+
+            <div className="mt-6 border-t pt-6">
+
+              <TaskCreateEdit
+                projectId={projectId}
+                onComplete={() =>
+                  setShowTaskForm(false)
+                }
+              />
+
+            </div>
+
+          )}
 
         </div>
 
